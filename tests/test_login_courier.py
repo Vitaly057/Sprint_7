@@ -4,6 +4,7 @@ import requests
 from config import URL_SERVICE
 from helpers.courier import generate_random_string, login_courier
 
+
 class TestLoginCourier:
 
     @allure.title('Курьер может авторизоваться')
@@ -14,18 +15,23 @@ class TestLoginCourier:
         assert isinstance(response.json()['id'], int)
         assert response.json()['id'] == courier['id']
 
-    @allure.title('Для авторизации нужно передать все обязательные поля')
-    @pytest.mark.parametrize('missing_field', ['login', 'password'])
-    def test_login_courier_missing_field_returns_400(self, courier, missing_field):
+    @allure.title('Для авторизации нужно передать логин')
+    def test_login_courier_missing_login_returns_400(self, courier):
         payload = {
-            'login': courier['login'],
             'password': courier['password'],
         }
-        if missing_field == 'login':
-            payload.pop(missing_field)
-        else:
-            # API не принимает запрос без ключа password — передаём пустую строку
-            payload['password'] = ''
+
+        response = requests.post(f'{URL_SERVICE}/api/v1/courier/login', data=payload)
+
+        assert response.status_code == 400
+        assert response.json()['code'] == 400
+
+    @allure.title('Для авторизации нужно передать пароль')
+    def test_login_courier_missing_password_returns_400(self, courier):
+        payload = {
+            'login': courier['login'],
+            'password': '',
+        }
 
         response = requests.post(f'{URL_SERVICE}/api/v1/courier/login', data=payload)
 
